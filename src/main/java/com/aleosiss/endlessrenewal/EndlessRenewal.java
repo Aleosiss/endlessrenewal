@@ -127,6 +127,15 @@ public class EndlessRenewal implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(literal("ae_goto").executes(EndlessRenewal.this::swapTargeted)));
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(literal("ae_init").executes(EndlessRenewal.this::alternateEndInit)));
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(literal("ae_getdimension").executes(EndlessRenewal.this::getCurrentDimension)));
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(literal("ae_toggleactive").executes(EndlessRenewal.this::toggleModActive)));
+    }
+
+    private int toggleModActive(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        MOD_ACTIVE = !MOD_ACTIVE;
+
+        ServerPlayerEntity player = context.getSource().getPlayer();
+        player.sendSystemMessage(new LiteralText("EndlessRenewal MOD_ACTIVE is " + MOD_ACTIVE), Util.NIL_UUID);
+        return 1;
     }
 
     private int getCurrentDimension(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
