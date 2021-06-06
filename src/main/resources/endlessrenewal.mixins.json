@@ -6,7 +6,8 @@
   "mixins": [
     "EndDragonFightAccessor",
     "EndPortalMixin",
-    "EntityTeleportationMixin"
+    "EntityTeleportationMixin",
+    "ServerWorldMixin"
   ],
   "client": [
   ],

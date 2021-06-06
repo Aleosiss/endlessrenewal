@@ -1,5 +1,7 @@
 package com.aleosiss.endlessrenewal;
 
+import com.aleosiss.endlessrenewal.data.EndlessRenewalState;
+import com.aleosiss.endlessrenewal.mixin.EndDragonFightAccessor;
 import com.aleosiss.endlessrenewal.util.ERUtils;
 import com.aleosiss.endlessrenewal.world.AlternateEndChunkGenerator;
 import com.mojang.brigadier.context.CommandContext;
@@ -28,6 +30,8 @@ import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.function.Supplier;
+
 import static net.minecraft.entity.EntityType.COW;
 import static net.minecraft.server.command.CommandManager.literal;
 
@@ -43,6 +47,9 @@ public class EndlessRenewal implements ModInitializer {
     public static final RegistryKey<World>             WORLD_KEY                   = RegistryKey.of(Registry.DIMENSION, DIMENSION_KEY.getValue());
     public static final RegistryKey<DimensionType>     DIMENSION_TYPE_KEY          = RegistryKey.of(Registry.DIMENSION_TYPE_KEY, DIMENSION_TYPE_IDENTIFER);
 
+    // our persistent data
+    public static EndlessRenewalState STATE;
+
     // did we kill the real ender dragon?
     public static boolean MOD_ACTIVE;
 
@@ -55,14 +62,22 @@ public class EndlessRenewal implements ModInitializer {
         ServerWorld overworld = server.getWorld(World.OVERWORLD);
         ServerWorld end = server.getWorld(World.END);
         ServerWorld alternateEnd = server.getWorld(WORLD_KEY);
+        Supplier<EndlessRenewalState> stateSupplier = () -> new EndlessRenewalState(server, MOD_ID);
+        STATE = alternateEnd.getPersistentStateManager().getOrCreate(stateSupplier, MOD_ID);
+
         EnderDragonFight enderDragonFight = end.getEnderDragonFight();
         if(enderDragonFight == null) {
             logger.warn("The original enderdragon fight was not detected.");
         }
 
         enderDragonFight = alternateEnd.getEnderDragonFight();
-        if(enderDragonFight == null) {
+        if(STATE.getEnderDragonFight() == null && enderDragonFight == null) {
             logger.warn("The alternate enderdragon fight was not detected.");
+            init(server, alternateEnd);
+        } else if(STATE.getEnderDragonFight() != null) {
+            logger.info("Setting alternate ender dragon fight from save.");
+            EndDragonFightAccessor alternateEndDragonFight = (EndDragonFightAccessor) alternateEnd;
+            alternateEndDragonFight.setEnderDragonFight(STATE.getEnderDragonFight());
         }
 
 
