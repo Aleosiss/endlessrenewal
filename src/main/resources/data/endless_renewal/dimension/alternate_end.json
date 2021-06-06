@@ -1,0 +1,12 @@
+{
+  "type": "endless_renewal:alternate_end_type",
+  "generator": {
+    "type": "minecraft:noise",
+    "seed": 0,
+    "biome_source": {
+      "seed": 0,
+      "type": "minecraft:the_end"
+    },
+    "settings": "minecraft:end"
+  }
+}
