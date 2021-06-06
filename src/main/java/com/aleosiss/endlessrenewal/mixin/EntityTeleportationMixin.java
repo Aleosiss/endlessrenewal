@@ -11,12 +11,16 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 @Mixin(ServerPlayerEntity.class)
 public abstract class EntityTeleportationMixin extends Entity {
+    @Shadow @Nullable public abstract BlockPos getSpawnPointPosition();
+
     public EntityTeleportationMixin(EntityType<?> type, World world) {
         super(type, world);
     }
@@ -37,7 +41,15 @@ public abstract class EntityTeleportationMixin extends Entity {
         }
 
         if(leavingAlternateEnd) {
-            blockPos = destination.getTopPosition(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, destination.getSpawnPos());
+            BlockPos finalDestPos;
+            BlockPos spawnPointPosition = this.getSpawnPointPosition();
+            if(spawnPointPosition != null) {
+                finalDestPos = spawnPointPosition;
+            } else {
+                finalDestPos = destination.getSpawnPos();
+            }
+
+            blockPos = destination.getTopPosition(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, finalDestPos);
             return new TeleportTarget(new Vec3d((double)blockPos.getX() + 0.5D, blockPos.getY(), (double)blockPos.getZ() + 0.5D), this.getVelocity(), this.yaw, this.pitch);
         }
 
