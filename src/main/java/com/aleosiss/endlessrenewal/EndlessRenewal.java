@@ -2,24 +2,19 @@ package com.aleosiss.endlessrenewal;
 
 import com.aleosiss.endlessrenewal.data.EndlessRenewalState;
 import com.aleosiss.endlessrenewal.mixin.EndDragonFightAccessor;
+import com.aleosiss.endlessrenewal.util.CommandUtils;
 import com.aleosiss.endlessrenewal.util.ERUtils;
 import com.aleosiss.endlessrenewal.world.AlternateEndChunkGenerator;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.command.CommandException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.dragon.EnderDragonFight;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
@@ -33,7 +28,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.function.Supplier;
 
 import static net.minecraft.entity.EntityType.COW;
-import static net.minecraft.server.command.CommandManager.literal;
 
 public class EndlessRenewal implements ModInitializer {
     private static final Logger logger = LogManager.getLogger();
@@ -55,6 +49,8 @@ public class EndlessRenewal implements ModInitializer {
 
     // is the alternate end ready for us to fight the dragon in?
     public static boolean ALTERATE_END_READY;
+
+    public static CommandUtils commandUtils = new CommandUtils();
 
     private static void onServerStarted(MinecraftServer server) {
         logger.info("Endless Renewal caught the server start!");
@@ -120,41 +116,10 @@ public class EndlessRenewal implements ModInitializer {
 
         ServerLifecycleEvents.SERVER_STARTED.register(EndlessRenewal::onServerStarted);
 
-        registerModCommands();
+        commandUtils.registerCommands();
     }
 
-    private void registerModCommands() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(literal("ae_goto").executes(EndlessRenewal.this::swapTargeted)));
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(literal("ae_init").executes(EndlessRenewal.this::alternateEndInit)));
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(literal("ae_getdimension").executes(EndlessRenewal.this::getCurrentDimension)));
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(literal("ae_toggleactive").executes(EndlessRenewal.this::toggleModActive)));
-    }
 
-    private int toggleModActive(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        MOD_ACTIVE = !MOD_ACTIVE;
-
-        ServerPlayerEntity player = context.getSource().getPlayer();
-        player.sendSystemMessage(new LiteralText("EndlessRenewal MOD_ACTIVE is " + MOD_ACTIVE), Util.NIL_UUID);
-        return 1;
-    }
-
-    private int getCurrentDimension(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayer();
-        Identifier worldId = player.getServerWorld().getRegistryKey().getValue();
-
-        player.sendSystemMessage(new LiteralText("Currently in dimension with type: " + worldId), Util.NIL_UUID);
-
-        return 1;
-    }
-
-    public int alternateEndInit(CommandContext<ServerCommandSource> context) {
-        MinecraftServer server = context.getSource().getMinecraftServer();
-        ServerWorld alternateEnd = getModWorld(context);
-
-        init(server, alternateEnd);
-
-        return 1;
-    }
 
     public static void init(MinecraftServer server, ServerWorld alternateEnd) {
         boolean requiresReset = false;
@@ -165,32 +130,11 @@ public class EndlessRenewal implements ModInitializer {
         }
     }
 
-
-    private int swapTargeted(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayer();
-        ServerWorld serverWorld = player.getServerWorld();
-        ServerWorld modWorld = getModWorld(context);
-
-        if (serverWorld != modWorld) {
-            player.moveToWorld(modWorld);
-
-            if (player.world != modWorld) {
-                throw new CommandException(new LiteralText("Teleportation failed!"));
-            }
-        } else {
-            TeleportTarget target = new TeleportTarget(new Vec3d(0, 100, 0), Vec3d.ZERO,
-                    (float) Math.random() * 360 - 180, (float) Math.random() * 360 - 180);
-            FabricDimensions.teleport(player, getWorld(context, World.OVERWORLD), target);
-        }
-
-        return 1;
-    }
-
-    private ServerWorld getModWorld(CommandContext<ServerCommandSource> context) {
+    private static ServerWorld getModWorld(CommandContext<ServerCommandSource> context) {
         return getWorld(context, WORLD_KEY);
     }
 
-    private ServerWorld getWorld(CommandContext<ServerCommandSource> context, RegistryKey<World> dimensionRegistryKey) {
+    private static ServerWorld getWorld(CommandContext<ServerCommandSource> context, RegistryKey<World> dimensionRegistryKey) {
         return context.getSource().getMinecraftServer().getWorld(dimensionRegistryKey);
     }
 }

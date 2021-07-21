@@ -5,10 +5,11 @@
   "compatibilityLevel": "JAVA_16",
   "mixins": [
     "EndDragonFightAccessor",
-    "EndPortalMixin",
     "EnderDragonFightDataAccessor",
+    "EndPortalMixin",
     "EntityTeleportationMixin",
-    "ServerWorldMixin"
+    "ServerWorldMixin",
+    "MinecraftServerAccessor"
   ],
   "client": [
   ],

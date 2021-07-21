@@ -22,7 +22,9 @@ public class EndlessRenewalState extends PersistentState {
 
     @Override
     public CompoundTag toTag(CompoundTag tag) {
-        tag.put(ALTERNATE_END_DRAGON_FIGHT_KEY, enderDragonFight.toTag());
+        if(enderDragonFight != null) {
+            tag.put(ALTERNATE_END_DRAGON_FIGHT_KEY, enderDragonFight.toTag());
+        }
 
         return tag;
     }
